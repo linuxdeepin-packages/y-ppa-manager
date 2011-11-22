@@ -1,0 +1,13 @@
+
+[Desktop Entry]
+Version=1.0
+Name=Settings
+Comment=Settings
+GenericName=Settings
+Exec=y-ppa-cmd settings
+Icon=gtk-execute
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager

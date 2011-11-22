@@ -1,0 +1,44 @@
+[Desktop Entry]
+Version=1.0
+Name=Y PPA Manager
+Comment=Y PPA Manager
+GenericName=Y PPA Manager
+Exec=/usr/bin/y-ppa-manager
+Icon=y-ppa-manager
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager
+X-Ayatana-Desktop-Shortcuts=YPPAManager1;YPPAManager2;YPPAManager3;YPPAManager4;YPPAManager5;YPPAManager6;
+TargetEnvironment=Unity
+
+[YPPAManager1 Shortcut Group]
+Name=Add PPA
+Exec=gksu -m "Y PPA Manager requires admin privileges for this task" -S "bash -c" "y-ppa-cmd add"
+TargetEnvironment=Unity
+
+[YPPAManager2 Shortcut Group]
+Name=Remove PPA
+Exec=gksu -m "Y PPA Manager requires admin privileges for this task" -S "bash -c" "y-ppa-cmd remove"
+TargetEnvironment=Unity
+
+[YPPAManager3 Shortcut Group]
+Name=Search in all Launchpad PPAs
+Exec=y-ppa-cmd search
+TargetEnvironment=Unity
+
+[YPPAManager4 Shortcut Group]
+Name=List packages in a PPA
+Exec=y-ppa-cmd list
+TargetEnvironment=Unity
+
+[YPPAManager5 Shortcut Group]
+Name=Advanced
+Exec=y-ppa-cmd advanced
+TargetEnvironment=Unity
+
+[YPPAManager6 Shortcut Group]
+Name=Settings
+Exec=y-ppa-cmd settings
+TargetEnvironment=Unity

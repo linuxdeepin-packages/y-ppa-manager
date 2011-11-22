@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Search in all Launchpad PPAs
+Comment=Search in all Launchpad PPAs - you will then be able to add a PPA or download .deb packages from a PPA
+GenericName=Search in all Launchpad PPAs
+Exec=y-ppa-cmd search
+Icon=stock_search
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+function Y_MAIN_DIALOG() {
+Y_RUN=$(yad --icons --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --item-width="182" --read-dir="/usr/share/y-ppa-manager/desktopfiles" --width="420" --height="430" --title="Y PPA Manager" --text="\n<b>Double click</b> an item to perform an action:" --button="Help:0" --button="Close:1")
+
+if [[ $? -eq 0 ]]; then
+	Y_MAIN_DIALOG &
+	y-ppa-cmd help &
+else
+	exit
+fi
+}
+
+Y_MAIN_DIALOG &

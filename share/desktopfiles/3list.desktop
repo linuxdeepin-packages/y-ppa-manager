@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=List packages in a PPA enabled on your computer
+Comment=List packages in a PPA enabled on your computer
+GenericName=List packages in a PPA enabled on your computer
+Exec=y-ppa-cmd list
+Icon=gtk-properties
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager

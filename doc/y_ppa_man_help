@@ -1,0 +1,19 @@
+Add PPA - add a PPA (under the "ppa:webupd8/gthumb" form)
+
+Delete PPA - displays all the enabled PPAs (disabled PPAs will not be listed) and you can delete any PPA from that list
+
+List packages in a PPA enabled on your computer - lists all the packages that are available for your Ubuntu version in the selected PPA (only PPAs that you have added to your system and are enabled will show up here)
+
+Search in all Launchpad PPAs - will perform a search in all the Launchpad PPAs for the package you enter in the search form. The regular search uses the Launchpad PPA search so it may return empty PPAs if the PPAs have a description that matches your search, or a PPA with packages for a different Ubuntu version then your current Ubuntu version (or the Ubuntu version you've set Y PPA Manager to search for - see info regarding the settings below). The advanced search will only return the exact matches for your search and will display the PPAs and package versions at a glance.
+You will be able to perform the following operations on a PPA: add it, list all the packages in that PPA for your Ubuntu version (or the Ubuntu version you've set Y PPA Manager to search for) - including the package versions, download selected packages from a PPA, copy PPA link (so you can then paste it in a web browser).
+
+Advanced > Purge PPA - uses the "ppa-purge" tool to downgrade the packages in the selected PPA to the version in the official Ubuntu repositories and disables that PPA
+
+Advanced > e-enable working PPAs after Ubuntu upgrade - when you upgrade to a new Ubuntu version, all the PPAs are disabled. This feature checks if the old PPAs have been updated to work with your current Ubuntu version and if they do work, it re-enables them.
+
+
+Settings:
+
+- PPA Purge behavior: auto - don't require any user input; manual - opens a terminal window asking the user how to solve the issue (this is the default and highly recommended behavior).
+
+- Ubuntu version: this only affects the search. So if you want the Y PPA Manager search to display packages for some other Ubuntu version, simply change the Ubuntu version here. Supported versions: karmic, lucid, maverick or natty (use the Ubuntu version names for Linux Mint too!).

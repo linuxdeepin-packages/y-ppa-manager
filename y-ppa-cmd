@@ -1,0 +1,738 @@
+#!/bin/bash
+
+function CLEARTEMP () 
+{
+	rm /tmp/.temp_sourcesnames2.list /tmp/.temp_sources2.list /tmp/.non_disabled2.list /tmp/.temp_sourcesnames.list /tmp/.temp_sources.list /tmp/.non_disabled.list /tmp/+ppas* /tmp/.list_search_results /tmp/.Packages /tmp/.package_search_list_results /tmp/.package_search_list_results2 /tmp/.packagename /tmp/.packageversion /tmp/.packagename2 /tmp/.packageversion2 /tmp/.searched_ppa_names /tmp/.searched_ppas /tmp/.testinternet /tmp/.added_ppa > /dev/null 2>&1
+}
+ROOT_UID=0
+#UBUVER=`lsb_release -cs`
+#ON_USER=$(echo ~ | awk -F'/' '{ print $1 $2 $3 }' | sed 's/home//g')
+ON_USER=$(who | awk '{print $1}' | sed '/^root$/d' | uniq)
+
+case `lsb_release -cs` in
+	helena)
+		UBUVER="karmic" ;;
+	isadora)
+		UBUVER="lucid" ;;
+	julia)
+		UBUVER="maverick" ;;
+	katya)
+		UBUVER="natty" ;;
+	karmic)
+		UBUVER="karmic" ;;
+	lucid)
+		UBUVER="lucid" ;;
+	maverick)
+		UBUVER="maverick" ;;
+	natty)
+		UBUVER="natty" ;;
+	oneiric)
+		UBUVER="oneiric" ;;
+	*) echo You are not using a compatible distro. Your distro must be based on at least Ubuntu 9.10.
+	yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Error" --text="  You are not using a compatible distro. Your distro must be based on at least Ubuntu 9.10.  "
+	exit ;;
+esac
+
+
+
+
+#check if the user has an active internet connection
+function testConnection() 
+{
+	testconnection=`wget --tries=3 --timeout=15 www.google.com -O /tmp/.testinternet &>/dev/null 2>&1`
+	if [[ $? != 0 ]]; then
+		echo  "You are not connected to the Internet. Please check your Internet connection and try again."
+		yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Internet connection error" --text="   You don't seem to be connected to the Internet.   \n   This function needs a working internet connection (and working wget)   " --button="gtk-ok:0"
+		ppa_manager_run
+	else
+		echo Internet connection - ok
+		rm /tmp/.testinternet  > /dev/null 2>&1
+	fi
+}
+
+function checkAPT()
+{
+	sleep 1
+	for lock in synaptic update-manager software-center apt-get dpkg aptitude
+	do
+		if ps -U root -u root u | grep $lock | grep -v grep > /dev/null;
+			then 
+				echo "Installation won't work. Please close $lock first then try again.";
+				yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Warning - Y PPA Manager" --text="\n\n  Selected action won't work.  \n\n  Please close / wait for <b>$lock</b> to finish and try again!   \n" --button="gtk-ok:0"
+				exit
+		fi
+	done
+}
+
+function ONLYROOT ()
+{
+
+if [[ "$UID" -ne "$ROOT_UID" ]]; then 
+	yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Error - Cannot run as regular user" --text="  Please run y-ppa-manager as an administrator  \n  (e.g. gksu y-ppa-manager)   " --button="gtk-ok:0"
+	echo "Error - Cannot run as regular user! Please run y-ppa-manager as an administrator (e.g. gksu  y-ppa-manager)"
+	exit
+fi
+
+}
+     
+function y_add_ppa ()
+{
+ONLYROOT
+
+#echo 1 $1
+if [[ $UBUVER = "oneiric" ]]; then
+	add-apt-repository -y $1 &> /tmp/.added_ppa
+else
+	add-apt-repository $1 &> /tmp/.added_ppa
+fi
+ERRORGETTINGKEY=$(cat /tmp/.added_ppa | tail -n 1 | grep ^gpg.*0$)
+if [[ $ERRORGETTINGKEY ]]; then
+	GPGKEYTOGET=$(cat /tmp/.added_ppa | grep "recv" | cut -d' ' -f17)
+	gpg --ignore-time-conflict --no-options --no-default-keyring --secret-keyring /etc/apt/secring.gpg --trustdb-name /etc/apt/trustdb.gpg --keyring /etc/apt/trusted.gpg --primary-keyring /etc/apt/trusted.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv $GPGKEYTOGET
+fi
+
+rm /tmp/.added_ppa > /dev/null 2>&1
+}
+
+
+function find_n_remove_dupes() {
+
+checkAPT
+
+finddupes=$(unset flist; declare -A flist
+while read -r sum fname; do
+    if [[ ${flist[$sum]} ]]; then
+        printf 'sudo rm -- "%s" # Same as >%s<\n' "$fname" "${flist[$sum]}" 
+    else
+        flist[$sum]="$fname"
+    fi
+done <  <(find /etc/apt/sources.list.d/ -name "*.list" -exec sha256sum {} +)  >/tmp/.rmdups)
+
+if [[ -s /tmp/.rmdups ]]; then 
+	yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Duplicate sources detected" --text="   You seem to have duplicate PPA source list files   \n   Do you want Y PPA Manager to remove the duplicates?   " --button="gtk-ok:0" --button="gtk-cancel:1"
+	if [[ $? -eq 0 ]]; then
+	chmod +x /tmp/.rmdups
+	gksu -S -m "Y PPA Manager requires admin privileges for this task" "sh -c 'sh /tmp/.rmdups && rm /tmp/.rmdups && apt-get update'"
+	notify-send --expire-time="5000" --icon=gtk-apply "Y PPA Manager - Done" "Successfully removed duplicates and updated the software sources!"
+	fi
+else
+	notify-send --expire-time="5000" --icon=gtk-close "Y PPA Manager" "No PPA duplicates found!"
+	echo no dupes found
+fi
+
+advanced_options
+}
+
+add_a_PPA()  
+{
+	ONLYROOT
+	checkAPT
+
+	ADD_PPA=`yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --entry --title="Add a PPA" --text="Enter a PPA to add (e.g.: ppa:webupd8team/ghtumb)\n" --entry-label="PPA:"`
+	
+
+	if [[ $? -eq 0 ]]; then
+	
+		ADD_PPA_NO_SPACES=`echo "$ADD_PPA" | sed -e "s/ //g"`
+		
+		valid_ppa_check1=$(echo "$ADD_PPA_NO_SPACES" | grep "^ppa:")
+		valid_ppa_check2=$(echo "$ADD_PPA_NO_SPACES" | sed -e "s/^ppa://g" | grep "/")
+		valid_ppa_check3=$(echo "$ADD_PPA_NO_SPACES" | sed -e "s/^ppa://g" | cut -d '/' -f 1 | wc -c)
+		valid_ppa_check4=$(echo "$ADD_PPA_NO_SPACES" | sed -e "s/^ppa://g" | cut -d '/' -f 2 | wc -c)
+		valid_ppa_check5=$(echo "$ADD_PPA_NO_SPACES" | tr -cd "/" | wc -c)
+		valid_ppa_check6=$(echo "$ADD_PPA_NO_SPACES" | tr -cd ":" | wc -c)		
+		
+		if [[ "$ADD_PPA_NO_SPACES" && $valid_ppa_check1 && $valid_ppa_check2 && $valid_ppa_check3 -gt 0 && $valid_ppa_check4 -gt 0 && $valid_ppa_check5 -eq 1 && $valid_ppa_check6 -eq 1 ]]; then
+			checkAPT
+			notify-send --expire-time="3000" --icon=gtk-add "Y PPA Manager" "Adding "$ADD_PPA_NO_SPACES" and updating software sources"
+			y_add_ppa "$ADD_PPA_NO_SPACES"
+			apt-get update
+			
+			ppafilename1=`echo "$ADD_PPA_NO_SPACES" | sed -e "s/^ppa://g" -e "s/\//-/g"`
+			ppafilename2=`echo "$ADD_PPA_NO_SPACES" | sed -e "s/^ppa://g" -e "s/\//-/g"`
+			
+			if [[ -e /etc/apt/sources.list.d/"$ppafilename1".list || -e /etc/apt/sources.list.d/"$ppafilename2"-$UBUVER\.list ]]; then
+			
+				notify-send --expire-time="5000" --icon=gtk-add "Y PPA Manager - Done" "The "$ADD_PPA_NO_SPACES" PPA has been added successfully!"
+			else
+				notify-send --icon=error "Y PPA Manager" "An error occured and "$ADD_PPA_NO_SPACES" has not been added!"
+			
+			fi	
+		
+		else
+			yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Error" --text="  The PPA you've entered is not valid  \n  Please enter a valid PPA (e.g.: ppa:webupd8/gthumb)  " --button="gtk-ok:0"
+			add_a_PPA
+		fi	
+	else
+		exit
+	fi
+}
+
+remove_a_PPA()  
+{
+	ONLYROOT
+	checkAPT
+	
+
+	touch /tmp/.temp_sourcesnames2.list
+
+	sourcesLIST=`ls /etc/apt/sources.list.d | grep .list$ > /tmp/.temp_sources2.list ; cat /tmp/.temp_sources2.list`
+
+	touch /tmp/.non_disabled2.list
+
+	cat /tmp/.temp_sources2.list
+	IFS=$'\n'
+	n=1
+	while read curline; do
+		ppa_disabled_lp_check=`cat /etc/apt/sources.list.d/"$curline" | sed -e 's/^deb-src.*//g' -e '/^$/d' | grep -v "^[[:space:]]*\(#.*\)\?$" | grep "http://ppa.launchpad.net"`
+		#is_launchpad_ppa=`cat /etc/apt/sources.list.d/"$curline" | grep "http://ppa.launchpad.net"`
+#echo $curline
+		if [[ $ppa_disabled_lp_check ]]; then
+			echo "$curline" | sed -e "s/\.list//g" | tee -a /tmp/.non_disabled2.list > /dev/null 2>&1;
+		fi
+		let n=n+1
+	done < /tmp/.temp_sources2.list
+
+#trying to fix -ubuntuversion not existing
+#	cat /tmp/.non_disabled2.list
+
+#	while read curline; do
+
+#echo $curline
+#		if [[ $is_launchpad_ppa ]]; then
+#			echo "$curline" | tee -a /tmp/.real_lp_ppas.list > /dev/null 2>&1;
+#		fi
+#		let n=n+1
+#	done < /tmp/.non_disabled2.list
+
+
+	sourcesNAMES=`cat /tmp/.non_disabled2.list`
+
+
+	DEL_PPA=$(yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --separator="" --list --width=400 --height=300 --title="Remove a PPA" --text="Select a PPA to remove (only non-disabled PPAs are listed)" --column="PPA to remove" --button="Close:1" --button="Remove:0" $sourcesNAMES)
+	ret=$?
+
+
+	if [[ $ret -eq 0 ]]; then
+
+		yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Confirm" --text="  Are you sure you want to remove  \n  the "$DEL_PPA" PPA?   " --button="Cancel:1" --button="OK:0"
+		if [[ $? -eq 0 ]]; then
+		
+        		checkAPT
+        		notify-send --expire-time="3000" --icon=gtk-remove "Y PPA Manager" "Removing "$DEL_PPA" and updating software sources"
+        		
+        		#to modify to real path:
+			rm /etc/apt/sources.list.d/"$DEL_PPA".list > /dev/null 2>&1;
+			#rm /home/andrei/Desktop/sources.list.d/"$DEL_PPA".list > /dev/null 2>&1;
+			apt-get update
+			rm /tmp/.temp_sourcesnames2.list /tmp/.temp_sources2.list /tmp/.non_disabled2.list > /dev/null 2>&1;
+			notify-send --expire-time="5000" --icon=gtk-delete "Y PPA Manager - Done" "Removed PPA: "$DEL_PPA" successfully!"
+			remove_a_PPA
+			
+
+		fi
+		
+	else
+
+		CLEARTEMP
+		exit
+		
+	fi
+
+}	
+
+purge_a_PPA()  
+{
+	checkAPT
+	testConnection
+
+
+	touch /tmp/.temp_sourcesnames2.list
+	touch /tmp/.non_disabled2.list
+
+	sourcesLIST=`ls /etc/apt/sources.list.d | grep .list$ > /tmp/.temp_sources2.list ; cat /tmp/.temp_sources2.list`
+
+
+	cat /tmp/.temp_sources2.list
+	IFS=$'\n'
+	n=1
+	while read curline; do
+		ppa_disabled_lp_check=`cat /etc/apt/sources.list.d/"$curline" | sed -e 's/^deb-src.*//g' -e '/^$/d' | grep -v "^[[:space:]]*\(#.*\)\?$" | grep "http://ppa.launchpad.net"`
+#		is_launchpad_ppa=`cat /etc/apt/sources.list.d/"$curline" | grep "http://ppa.launchpad.net"`
+		
+		echo $curline
+		if [[ $ppa_disabled_lp_check ]]; then
+			echo "$curline" | sed -e "s/\.list//g" | tee -a /tmp/.non_disabled2.list
+		fi
+		let n=n+1
+	done < /tmp/.temp_sources2.list
+
+#trying to fix -ubuntuversion not existing
+#	cat /tmp/.non_disabled2.list
+
+#	while read curline; do
+#		is_launchpad_ppa=`cat /etc/apt/sources.list.d/"$curline".list | grep "http://ppa.launchpad.net"`
+##echo $curline
+#		if [[ $is_launchpad_ppa ]]; then
+#			echo "$curline" | tee -a /tmp/.real_lp_ppas.list > /dev/null 2>&1;
+#		fi
+#		let n=n+1
+#	done < /tmp/.non_disabled2.list
+
+
+	sourcesNAMES=`cat /tmp/.non_disabled2.list`
+
+	PURGE_PPA=$(yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --separator="" --list --width=400 --height=300 --title="Purge a PPA - Y PPA Manager" --text="Select a PPA to purge (only non-disabled PPAs are listed)" --column="PPA to purge" --button="Close:1" --button="Back:2" --button="Purge:0" $sourcesNAMES)
+	ret=$?
+
+
+	if [[ $ret -eq 0 ]]; then
+
+			yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Confirm" --text="  Are you sure you want to purge  \n  the "$PURGE_PPA" PPA?   " --button="Cancel:1" --button="OK:0"
+			if [[ $? -eq 0 ]]; then
+				checkAPT
+				testConnection
+				
+				the_ppa_to_purge=`cat /etc/apt/sources.list.d/"$PURGE_PPA"\.list | sed -e 's/^deb-src.*//g' -e '/^$/d' -e "s/deb http:\/\/ppa.launchpad.net\/\|\/ubuntu $UBUVER main//g" -e "s/#.*//g"`
+				#xterm -hold -e ppa-purge ppa:$the_ppa_to_purge
+				PPA_PURGE_AUTO=`grep "ppa-purge=auto" /etc/y-ppa-manager.conf`
+				
+				if [[ $PPA_PURGE_AUTO ]]; then
+					notify-send --icon=gtk-delete "Y PPA Manager" "Please wait while purging "$the_ppa_to_purge""
+					if [[ `lsb_release -cs` = "helena" || `lsb_release -cs` = "isadora" || `lsb_release -cs` = "julia" || `lsb_release -cs` = "katya" ]]; then
+						gksu -S ppa-purge -d $UBUVER -y ppa:$the_ppa_to_purge
+					else
+						gksu -S ppa-purge -y ppa:$the_ppa_to_purge
+					fi
+				else
+					notify-send --icon=gtk-delete "Y PPA Manager" "Close the terminal window when you're done purging!"
+					if [[ `lsb_release -cs` = "helena" || `lsb_release -cs` = "isadora" || `lsb_release -cs` = "julia" || `lsb_release -cs` = "katya" ]]; then
+						xterm -hold -e sudo ppa-purge -d $UBUVER ppa:$the_ppa_to_purge
+					else					
+						xterm -hold -e sudo ppa-purge ppa:$the_ppa_to_purge
+					fi
+				fi
+				notify-send --expire-time="5000" --icon=gtk-delete "Y PPA Manager - Done" "Purged PPA: "$the_ppa_to_purge""
+				rm /tmp/.temp_sourcesnames2.list /tmp/.temp_sources2.list /tmp/.non_disabled2.list > /dev/null 2>&1
+				purge_a_PPA
+			else
+				purge_a_PPA
+		
+			fi
+
+	elif [[ $ret  -eq 2 ]]; then
+		advanced_options
+		
+	else
+		CLEARTEMP
+		exit
+	
+	fi
+
+}	
+
+list_packages_PPA()
+{
+
+	touch /tmp/.temp_sourcesnames.list
+	touch /tmp/.non_disabled.list
+
+	rm /tmp/.Packages > /dev/null 2>&1;
+
+	list_sourcesLIST=`ls /etc/apt/sources.list.d | grep .list$ > /tmp/.temp_sources.list ; cat /tmp/.temp_sources.list`
+
+	cat /tmp/.temp_sources.list
+	IFS=$'\n'
+	n=1
+	while read curline; do
+		ppa_disabled_lp_check=`cat /etc/apt/sources.list.d/"$curline" | sed -e 's/^deb-src.*//g' -e '/^$/d' | grep -v "^[[:space:]]*\(#.*\)\?$" | grep "http://ppa.launchpad.net"`
+
+		if [[ $ppa_disabled_lp_check ]]; then
+			echo "$curline" | sed -e "s/\.list\|$null//g" | tee -a /tmp/.non_disabled.list > /dev/null 2>&1;
+		fi
+		let n=n+1
+	done < /tmp/.temp_sources.list
+
+
+	#list_sourcesNAMES=`cat /tmp/.non_disabled.list`
+#trying to fix -ubuntuversion not existing
+#	cat /tmp/.non_disabled.list
+
+#	while read curline; do
+#		is_launchpad_ppa=`cat /etc/apt/sources.list.d/"$curline".list | grep "http://ppa.launchpad.net"`
+#echo $curline
+#		if [[ $is_launchpad_ppa ]]; then
+#			echo "$curline" | tee -a /tmp/.real_lp_ppas2.list > /dev/null 2>&1;
+#		fi
+#		let n=n+1
+#	done < /tmp/.non_disabled.list
+
+
+	list_sourcesNAMES=`cat /tmp/.non_disabled.list`
+
+	LIST_PPA_PACKAGES=$(yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --separator="" --list --width=400 --height=300 --title="Display packages - Y PPA Manager" --text="Select the PPA you want to list packages (and versions) for \n(only non-disabled PPAs are listed)"  --button="Close:1" --button="List packages:0" --column "PPA" --list $list_sourcesNAMES)
+
+	if [[ $? -eq 0 ]]; then
+
+		ppa_temp_url=`cat /etc/apt/sources.list.d/"$LIST_PPA_PACKAGES".list | sed -e 's/^deb-src.*//g' -e '/^$/d' -e 's/^deb //g' -e 's/ /\//g' -e "s/\/ubuntu\/$UBUVER\/main/\/ubuntu\/dists\/$UBUVER\/main/g" -e "s/#.*//g"`
+		echo ppa temp url $ppa_temp_url
+
+
+		if [[ "i686" = `uname -m` ]]; then
+			arch=i386
+		elif [[ "x86_64" = `uname -m` ]]; then
+			arch=amd64
+		else
+       			echo You are not using Ubuntu 32bit or 64bit, exiting
+       			exit
+   		fi
+   	
+   		testConnection
+   		cd /tmp/
+		wget "$ppa_temp_url"/binary-$arch/Packages
+		mv Packages .Packages
+		#echo  $ppa_temp_url/binary-$arch/Packages
+
+
+		PPA_PACKAGES=`grep "^Package: " .Packages | sed -e 's/Package://g' > .packagename2`
+		PPA_VERSIONS=`grep "^Version: "  .Packages |  sed -e 's/Version://g' -e 's/$/)/g' -e 's/^ /(/g' > .packageversion2`
+
+		paste --delimiters=" " .packagename2 .packageversion2 > .package_search_list_results2
+
+		PPA_SEARCH_LIST_RESULTS2=`cat .package_search_list_results2`
+
+		url_part_1=`echo "$ppa_temp_url" | cut -d '/' -f 4`
+		url_part_2=`echo "$ppa_temp_url" | cut -d '/' -f 5`
+		ppa_name=""$url_part_1"/"$url_part_2""
+
+		#ZENITY_PPA_PACKAGES="$PPA_PACKAGES ($PPA_VERSIONS)"
+
+		LIST_PACKAGES=`yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --width=500 --height=250 --title="Packages - Y PPA Manager" --button="Back:1" --button="Open PPA in browser:0" --text="  Packages in "$ppa_name" PPA (for your Ubuntu version only!): " --column="Package (version)" --list $PPA_SEARCH_LIST_RESULTS2`
+		if [[ $? -eq 0 ]]; then	
+
+		
+			#echo "http://launchpad.net/~"$url_part_1"/+archive/"$url_part_2"" | xclip -selection clipboard
+			#notify-send --expire-time="8000" --icon=gtk-paste "Y PPA Manager" ""$ppa_name" PPA link has been copied to the clipboard. Paste the link (CTRL + V) in a web browser."
+			#open PPA link in browser:
+			xdg-open http://launchpad.net/~"$url_part_1"/+archive/"$url_part_2"
+			CLEARTEMP
+			list_packages_PPA
+	
+		elif [[ $? -eq 1 ]]; then
+			CLEARTEMP	
+			list_packages_PPA
+		fi	
+
+		CLEARTEMP
+	
+	else
+		CLEARTEMP
+		exit
+		
+	fi
+
+}
+
+
+
+function y_ppa_backup() {
+
+b_name=$(date +%F-%H%M)
+
+Y_PPA_BACKUP=`yad --class="Y-PPA-Manager" --name="Y PPA Manager" --file-selection --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --filename=/home/$ON_USER/repositories.backup-$b_name.tar.gz --save  --button="Cancel:1" --button="Save:0" --width=700 --height=500 --title="Save the backup..."`
+
+if [[ $? -eq 0 ]]; then
+	cp -r /etc/apt/sources.list.d/ /tmp/.sources
+	cd /tmp/.sources/
+	tar czvf repositories.backup-$b_name.tar.gz *
+	cp /tmp/.sources/repositories.backup-$b_name.tar.gz "$Y_PPA_BACKUP"
+	cd -
+	rm -r /tmp/.sources
+	notify-send --expire-time="3000" --icon=gtk-save "Y PPA Manager" "Repositories backup successfully created"
+	
+else
+	CLEARTEMP
+	exit
+fi
+advanced_options
+}
+
+#function y_full_backup() {
+
+#b_name=$(date +%F-%H%M)
+
+#Y_PPA_BACKUP=`yad --class="Y-PPA-Manager" --name="Y PPA Manager" --file-selection --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --filename=/home/$ON_USER/full-sources.backup-$b_name.tar.gz --save  --button="Cancel:1" --button="Save:0" --width=700 --height=500 --title="Save the backup..."`
+
+#if [[ $? -eq 0 ]]; then
+#	cd /etc/apt/
+#	gksu -S -m "Y PPA Manager requires admin privileges for this task" tar czvf full-sources.backup-$b_name.tar.gz *
+#	cp /etc/apt/full-sources.backup-$b_name.tar.gz "$Y_PPA_BACKUP"
+#	cd -
+#	gksu -S rm /etc/apt/full-sources.backup-$b_name.tar.gz
+#	notify-send --expire-time="3000" --icon=gtk-add "Y PPA Manager" "Full sources backup successfully created"
+#else
+#	CLEARTEMP
+#	exit
+#fi
+#advanced_options
+#}
+
+
+function y_ppa_restore() {
+Y_PPA_BACKUP=`yad --class="Y-PPA-Manager" --name="Y PPA Manager" --file-selection --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --save  --button="Cancel:1" --button="Restore:0" --width=700 --height=500 --title="Select backup to restore..."`	
+
+if [[ $? -eq 0 ]]; then
+	gksu -S -m "Y PPA Manager requires admin privileges for this task" -- "bash -c" "tar zxvf "$Y_PPA_BACKUP" -C /etc/apt/sources.list.d/ && launchpad-getkeys"
+	notify-send --expire-time="3000" --icon=document-save "Y PPA Manager" "Repositories backup successfully restored. It's advisable to run an update now"
+else
+	CLEARTEMP
+	exit
+fi
+
+advanced_options
+}
+
+
+function y_ppa_upgrade() {
+	gksu -S -m "Y PPA Manager requires admin privileges for this task" ppa-upgrade
+}
+
+#function y_full_restore() {
+#Y_PPA_BACKUP=`yad --file-selection --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --save  --button="Cancel:1" --button="Restore:0" --width=700 --height=500 --title="Select a full backup to restore..."`	
+
+#if [[ $? -eq 0 ]]; then
+#	gksu -S -m "Y PPA Manager requires admin privileges for this task" "tar -xvf "$Y_PPA_BACKUP" -C /etc/apt/"
+#	notify-send --expire-time="3000" --icon=gtk-add "Y PPA Manager" "Full sources backup successfully restored. It's advisable to run an update now"
+#else
+#	CLEARTEMP
+#	exit
+#fi
+
+#advanced_options
+#}
+
+function advanced_options() {
+
+Y_ADVANCED=`yad --list --no-headers --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --column="" "Purge a PPA" "Scan and remove duplicate PPAs" "Backup repositories" "Restore repositories backup" "Re-enable working PPAs after Ubuntu upgrade" --width=320 --height=200 --title="Advanced"`
+
+Y_ADVANCED_fix=`echo "$Y_ADVANCED" | sed -e "s/|//"`
+
+if [[ $? -eq 0 ]]; then
+	if [[ $Y_ADVANCED_fix = "Backup repositories" ]]; then
+		y_ppa_backup
+	elif [[ $Y_ADVANCED_fix = "Purge a PPA" ]]; then
+		purge_a_PPA
+	elif [[ $Y_ADVANCED_fix = "Scan and remove duplicate PPAs" ]]; then
+		find_n_remove_dupes
+#	elif [[ $Y_ADVANCED_fix = "Backup: all repositories" ]]; then
+#		y_full_backup
+	elif [[ $Y_ADVANCED_fix = "Restore repositories backup" ]]; then
+		y_ppa_restore
+	elif [[ $Y_ADVANCED_fix = "Re-enable working PPAs after Ubuntu upgrade" ]]; then
+		y_ppa_upgrade
+#	elif [[ $Y_ADVANCED_fix = "Restore: all repositories backup" ]]; then
+#		y_full_restore
+	else
+		CLEARTEMP
+		exit
+
+	fi
+else
+	CLEARTEMP
+	exit
+fi
+
+}
+
+
+
+function reset_settings() {
+
+#	DOWN_DIR=`cat /home/$ON_USER/.config/user-dirs.dirs | grep XDG_DOWNLOAD_DIR | sed -e 's/XDG_DOWNLOAD_DIR="$HOME\///g' -e 's/"//g'`
+
+#	gksu -S -m "Y PPA Manager requires admin privileges for this task" rm /etc/y-ppa-manager.conf
+	
+	echo "#ppa-purge behavior: auto - don't require any user input; manual - opens a terminal window asking the user how to solve the issue (this is the default behavior). Set manual/auto below:" > /tmp/.y-ppa-manager.conf
+	echo "ppa-purge=manual" >> /tmp/.y-ppa-manager.conf
+	echo $'\n' >> /tmp/.y-ppa-manager.conf
+	echo "#By default, the integrated PPA Search will display packages for your Ubuntu version. However, you can change this below:" >> /tmp/.y-ppa-manager.conf
+	echo "searchdist=$UBUVER" >> /tmp/.y-ppa-manager.conf
+	echo $'\n' >> /tmp/.y-ppa-manager.conf
+#	echo "#Downloads folder (default: /home/$ON_USER/$DOWN_DIR/y-ppa-manager):" >> /tmp/.y-ppa-manager.conf
+#	echo "downloads=/home/$ON_USER/$DOWN_DIR/y-ppa-manager" >> /tmp/.y-ppa-manager.conf
+	echo "rankings=false" >> /tmp/.y-ppa-manager.conf
+
+
+	gksu -S -m "Y PPA Manager requires admin privileges for this task" "sh -c 'rm /etc/y-ppa-manager.conf; cp /tmp/.y-ppa-manager.conf /etc/y-ppa-manager.conf'"
+	rm /tmp/.y-ppa-manager.conf
+
+	notify-send --expire-time="3000" --icon=gtk-refresh "Y PPA Manager" "Settings reseted"
+
+}
+
+function y_ppa_settings() {
+
+current_ubuntu_version=`grep "searchdist=" /etc/y-ppa-manager.conf | sed -e 's/searchdist=//g'`
+current_ppa_purge=`grep "ppa-purge=" /etc/y-ppa-manager.conf | sed -e 's/ppa-purge=//g'`
+#current_downloads_folder=`grep "downloads=" /etc/y-ppa-manager.conf | sed -e "s/downloads=//g"`
+#temporarely_disabled current_rankings=`grep "rankings=" /etc/y-ppa-manager.conf | sed -e 's/rankings=//'`
+
+if [[ $current_ppa_purge = "auto" ]]; then
+	ppa_purge_opt="auto!manual"
+elif [[ $current_ppa_purge = "manual" ]]; then
+	ppa_purge_opt="manual!auto"
+fi
+
+#temporarely_disabled  if [[ $current_rankings = "false" ]]; then
+#temporarely_disabled  	rankings_opt="false!true"
+#temporarely_disabled  elif [[ $current_rankings = "true" ]]; then
+#temporarely_disabled  	rankings_opt="true!false"
+#temporarely_disabled  fi
+
+
+#temporarely_disabled  Y_SETTINGS=`yad --form --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --field="PPA-Purge:CB" $ppa_purge_opt --field="Display PPA rankings for deep search (slow):CB" $rankings_opt --field="Ubuntu version*" "$current_ubuntu_version" --field="Downloads folder:DIR" "$current_downloads_folder" --text="   * Linux Mint users - enter the corresponding Ubuntu version   " --button="Reset to default:2" --button="gtk-cancel:1" --button="gtk-ok:0"`
+
+Y_SETTINGS=`yad --form --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --field="PPA-Purge:CB" $ppa_purge_opt --field="Ubuntu version*" "$current_ubuntu_version" --text="   * Linux Mint users - enter the corresponding Ubuntu version   " --button="Reset to default:2" --button="gtk-cancel:1" --button="gtk-ok:0"`
+
+ret=$?
+
+echo ppa_purge_opt $ppa_purge_opt
+echo current_ubuntu_version $current_ubuntu_version
+#echo current_downloads_folder $current_downloads_folder
+echo Y_SETTINGS $Y_SETTINGS
+
+if [[ $ret -eq 0 ]]; then
+	Y_purge=`echo "$Y_SETTINGS" | cut -d '|' -f1`
+#temporarely_disabled 	Y_rank=`echo "$Y_SETTINGS" | cut -d '|' -f2`
+#temporarely_disabled 	Y_dist=`echo "$Y_SETTINGS" | cut -d '|' -f3`
+#temporarely_disabled 	Y_down=`echo "$Y_SETTINGS" | cut -d '|' -f4`
+#here, they must be from -f1 to -f4
+	Y_dist=`echo "$Y_SETTINGS" | cut -d '|' -f2`
+#	Y_down=`echo "$Y_SETTINGS" | cut -d '|' -f3`
+
+	cp /etc/y-ppa-manager.conf /tmp/.y-ppa-manager.conf
+
+	if [[ $Y_purge != $current_ppa_purge ]]; then
+
+		sed -i "s/ppa-purge=.*/ppa-purge=$Y_purge/g" /tmp/.y-ppa-manager.conf
+#		gksu -S -m "Y PPA Manager requires admin privileges for this task" cp /tmp/.y-ppa-manager.conf /etc/y-ppa-manager.conf
+#		rm /tmp/.y-ppa-manager.conf
+	fi
+	
+	if [[ $Y_dist != $current_ubuntu_version ]]; then
+
+		if [[ $Y_dist = "karmic" || $Y_dist = "lucid" || $Y_dist = "maverick" || $Y_dist = "natty" || $Y_dist = "oneiric" ]]; then
+			sed -i "s/searchdist=.*/searchdist=$Y_dist/g" /tmp/.y-ppa-manager.conf
+#			gksu -S -m "Y PPA Manager requires admin privileges for this task" cp /tmp/.y-ppa-manager.conf /etc/y-ppa-manager.conf
+#			rm /tmp/.y-ppa-manager.conf
+		else
+			yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Error" --text="  The Ubuntu version you've entered is not valid  \n  Please enter one of the following versions:  \n  oneiric, natty, maverick, lucid or karmic (in lowercase) " --button="gtk-ok:0"
+			y_ppa_settings
+		fi
+
+	fi
+
+#	if [[ $Y_down != $current_downloads_folder ]]; then
+#		escape_Y_down=`echo "$Y_down" | sed -e 's/\//\\\\\//g'`
+#		sed -i s/downloads=.*/downloads="$escape_Y_down"/g /tmp/.y-ppa-manager.conf
+#	fi
+
+#temporarely_disabled  	if [[ $Y_rank != $current_rankings ]]; then
+#temporarely_disabled  		sed -i "s/rankings=.*/rankings=$Y_rank/g" /tmp/.y-ppa-manager.conf
+#temporarely_disabled  	fi
+
+initial_settings=$(cat /etc/y-ppa-manager.conf)
+new_settings=$(cat /tmp/.y-ppa-manager.conf)
+
+	if [[ $initial_settings != $new_settings ]]; then
+		gksu -S -m "Y PPA Manager requires admin privileges for this task" cp /tmp/.y-ppa-manager.conf /etc/y-ppa-manager.conf
+		rm /tmp/.y-ppa-manager.conf
+		notify-send --expire-time="3000" --icon=gtk-save "Y PPA Manager" "Settings saved"
+	else
+		rm /tmp/.y-ppa-manager.conf
+	fi
+
+
+elif [[ $ret -eq 2 ]]; then
+	reset_settings
+
+else
+	CLEARTEMP
+	exit
+
+fi
+
+}
+
+
+help_dialog()
+{
+	yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --title="Help - Y PPA Manager" --width="500" --height="400" --text-info  --wrap --filename="/usr/share/doc/y-ppa-manager/y_ppa_man_help" --button="Close:1"
+
+	exit
+
+}
+
+
+#ppa_manager_run()
+#{
+#MANAGE_PPA=$(yad --class="y-ppa-manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --separator=" " --list --width=450 --height=250 --title="Y PPA Manager" --button="Help:3" --button="Exit:1" --button="Select:0" --text="Select an action:" --column=" " --no-headers "Add PPA" "Remove PPA" "Purge PPA" "List packages in a PPA on your computer" "Search packages in all Launchpad PPAs")
+
+#rett=$?
+
+#[[ $rett -eq 1 ]] && rm /tmp/.temp_sourcesnames2.list /tmp/.temp_sources2.list /tmp/.non_disabled2.list /tmp/.temp_sourcesnames.list /tmp/.temp_sources.list /tmp/.non_disabled.list /tmp/+ppas* /tmp/.list_search_results /tmp/.Packages /tmp/.package_search_list_results /tmp/.package_search_list_results2 /tmp/.packagename /tmp/.packageversion /tmp/.packagename2 /tmp/.packageversion2 /tmp/.searched_ppa_names /tmp/.searched_ppas /tmp/.testinternet > /dev/null 2>&1 && exit
+
+#if [[ $rett -eq 3 ]]; then
+#help_dialog
+
+#fi
+
+#	case $MANAGE_PPA in
+#		Add*)
+#		add_a_PPA ;;
+#		Remove*)
+#		remove_a_PPA ;;
+#		Purge*)
+#		purge_a_PPA ;;
+#		List*)
+#		list_packages_PPA ;;
+#		Search*)
+#		testConnection && exec list_search_ppas ;;
+#		*)
+#		exit ;;
+#	esac
+	
+#}
+
+#ppa_manager_run
+case $1 in
+	add)
+	add_a_PPA ;;
+	remove)
+	remove_a_PPA ;;
+	advanced)
+	advanced_options ;;
+	list)
+	list_packages_PPA ;;
+	help)
+	help_dialog ;;
+	search)
+	testConnection && exec list_search_ppas ;;
+	settings)
+	y_ppa_settings ;;
+	kadd)
+	y_add_ppa ;;
+	*)
+	echo Error, no such option!
+	echo
+	echo Usage:
+	echo y-ppa-cmd add - open the Add PPA dialog
+	echo y-ppa-cmd remove - open the Remove PPA dialog
+	echo y-ppa-cmd purge - open the Purge PPA dialog
+	echo y-ppa-cmd list - open the list PPAs you have added dialog
+	echo y-ppa-cmd advanced - launch the advanced options dialog
+	echo y-ppa-cmd search - search all Launchpad PPAs dialog
+	echo y-ppa-cmd settings - open the settings dialog
+	echo y-ppa-cmd help - open the Help dialog
+	exit
+esac

@@ -1,0 +1,80 @@
+#!/bin/bash
+#this script is licenced under the GPL by Christian Dannie Storgaard.
+
+
+#check if the user has an active internet connection
+function testConnection() 
+{
+	testconnection=`wget --tries=3 --timeout=15 www.google.com -O /tmp/.testinternet &>/dev/null 2>&1`
+	if [[ $? != 0 ]]; then
+		echo  "You are not connected to the Internet. Please check your Internet connection and try again."
+		yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Internet connection error" --text="   You don't seem to be connected to the Internet.   \n   This function needs a working internet connection (and working wget)   " --button="gtk-ok:0"
+		ppa_manager_run
+	else
+		echo Internet connection - ok
+		rm /tmp/.testinternet  > /dev/null 2>&1
+	fi
+}
+
+function ONLYROOT ()
+{
+
+if [[ "$UID" -ne "$ROOT_UID" ]]; then 
+	yad --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --form --title="Error - Cannot run as regular user" --text="  Please run this command from the  \n  Y PPA Manager Advanced dialog  " --button="gtk-ok:0"
+	echo "Error - Cannot run as regular user! Please run y-ppa-manager as an administrator (e.g. gksu  y-ppa-manager)"
+	exit
+fi
+
+}
+
+
+ONLYROOT
+
+
+yad --form --class="Y-PPA-Manager" --name="Y PPA Manager" --window-icon="/usr/share/icons/hicolor/128x128/apps/y-ppa-manager.svg" --text="   Will now scan all PPAs disabled after   \n   upgrade and re-enable those that work   \n   with your current Ubuntu version   " --button="gtk-cancel:1" --button="gtk-ok:0"
+
+ret=$?
+
+if [[ $ret -eq 0 ]]; then
+	testConnection
+
+	url_exists() {
+		rett=1
+		not_found=$(wget -S --spider "$url" 2>&1 | \
+		            grep -E '^\s*HTTP.*?404')
+		[[ -z "$( echo $not_found)" ]] && rett=0
+		return $rett
+	}
+
+
+	changed=0
+	for file in /etc/apt/sources.list.d/*; do
+		if [[ $file == *.save ]]; then continue; fi
+
+		line="$(grep -whE "disabled on upgrade" "$file" | head -1)"
+		if [[ -z $(echo $line) ]]; then continue; fi
+	
+		url="$(echo $line | sed -e "s/^# /#/g" -e "s/# disabled on upgrade.*//g" | cut -d\  -f2- | tr \  \/)"
+		url=${url//ubuntu/ubuntu\/dists}
+	
+		if url_exists "$url"; then
+			result=$(sed -i "s/^# //g" "$file" &>/dev/null; sed -i "s/ # disabled on upgrade.*//g" "$file" &>/dev/null; echo $?)
+			if [[ $result == 0 ]]; then
+				changed=1
+			fi
+		fi
+	done
+
+	if [[ $changed == 1 ]]; then
+		echo "Done!"
+		apt-get update
+		notify-send --expire-time="5000" --icon=object-flip-vertical "Y PPA Manager" "Enabled all PPAs that still work and were disabled after upgrading Ubuntu and updated software sources"
+		y-ppa-cmd advanced
+	else
+		notify-send --expire-time="5000" --icon=gtk-info "Y PPA Manager" "There are no PPAs disabled after upgrade that work with your current Ubuntu version"
+		y-ppa-cmd advanced
+	fi
+
+else
+	y-ppa-cmd advanced
+fi

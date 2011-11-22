@@ -1,0 +1,14 @@
+y-ppa-cmd /usr/bin/
+y-ppa-manager /usr/bin/
+list_search_ppas /usr/bin/
+ppastats.py /usr/bin/
+ppa-upgrade /usr/bin/
+debian/y-ppa-manager.desktop /usr/share/applications/
+doc/y_ppa_man_help /usr/share/doc/y-ppa-manager/
+share/icons/y-ppa-manager.png /usr/share/icons/hicolor/128x128/apps/
+share/icons/16/y-ppa-manager.png /usr/share/icons/hicolor/16x16/apps/
+share/icons/22/y-ppa-manager.png /usr/share/icons/hicolor/22x22/apps/
+share/icons/24/y-ppa-manager.png /usr/share/icons/hicolor/24x24/apps/
+share/icons/32/y-ppa-manager.png /usr/share/icons/hicolor/32x32/apps/
+share/icons/48/y-ppa-manager.png /usr/share/icons/hicolor/48x48/apps/
+share/desktopfiles /usr/share/y-ppa-manager/

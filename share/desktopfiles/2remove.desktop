@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Remove a PPA
+Comment=Remove a PPA
+GenericName=Remove a PPA
+Exec=gksu -m "Y PPA Manager requires admin privileges for this task" -S "bash -c" "y-ppa-cmd remove"
+Icon=gtk-remove
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager

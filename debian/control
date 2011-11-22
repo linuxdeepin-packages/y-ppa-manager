@@ -1,0 +1,12 @@
+Source: y-ppa-manager
+Section: misc
+Priority: extra
+Maintainer: Alin Andrei <webupd8@gmail.com>
+Build-Depends: cdbs
+Standards-Version: 3.9.1
+
+Package: y-ppa-manager
+Architecture: all
+Depends: ${shlibs:Depends}, yad (>= 0.12.0), libnotify-bin, ppa-purge, python-software-properties, wget, xterm, launchpad-getkeys, python, python-launchpadlib
+Description: Y PPA Manager
+ Easily manage PPAs: add, remove, purge and search all Launchpad PPAs using a graphical interface. The search feature allows you to add the found PPAs, just list the packages and their versions in a found PPA or download some packages in the PPA.

@@ -1,0 +1,197 @@
+y-ppa-manager (0.0.8.2-1~webupd8~oneiric2) oneiric; urgency=medium
+ 
+  * default
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 20 Oct 2011 14:30:58 +0300
+ 
+y-ppa-manager (0.0.8.2-1~webupd8~lucid1) lucid; urgency=medium
+ 
+  * default
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 20 Oct 2011 13:57:01 +0300
+ 
+y-ppa-manager (0.0.8.2-1~webupd8~lucid) lucid; urgency=medium
+ 
+  * new way of handling upgraded PPAs
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 20 Oct 2011 13:47:42 +0300
+ 
+y-ppa-manager (0.0.8.2-~webupd8~lucid4) lucid; urgency=medium
+ 
+  * default
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 20 Oct 2011 13:32:23 +0300
+ 
+y-ppa-manager (0.0.8.2-~webupd8~lucid3) lucid; urgency=medium
+ 
+  * one more bug
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 19 Oct 2011 14:40:52 +0300
+ 
+y-ppa-manager (0.0.8.2-~webupd8~lucid2) lucid; urgency=medium
+ 
+  * some bugfixes
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 19 Oct 2011 13:43:07 +0300
+ 
+y-ppa-manager (0.0.8.2-~webupd8~lucid1) lucid; urgency=medium
+ 
+  * default
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Tue, 18 Oct 2011 12:25:21 +0300
+ 
+y-ppa-manager (0.0.8.2-~webupd8~lucid) lucid; urgency=medium
+ 
+  * new release
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Mon, 17 Oct 2011 22:28:43 +0300
+ 
+y-ppa-manager (0.0.8.1-3~webupd8~karmic) karmic; urgency=medium
+ 
+  * a few bug fixes
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 07 Sep 2011 12:39:12 +0300
+ 
+y-ppa-manager (0.0.8.1-2~webupd8~karmic) karmic; urgency=medium
+ 
+  * minor bugfixes
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Mon, 05 Sep 2011 22:38:34 +0300
+ 
+y-ppa-manager (0.0.8.1-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * fix add-apt-repository issue in oneiric
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sat, 03 Sep 2011 18:31:00 +0300
+ 
+y-ppa-manager (0.0.8-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * new upstream release - adds oneiric support
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sat, 03 Sep 2011 16:26:35 +0300
+ 
+y-ppa-manager (0.0.7.9-1~webupd8~karmic) karmic; urgency=low
+ 
+  * minor bugix
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sun, 15 May 2011 23:26:14 +0300
+ 
+y-ppa-manager (0.0.7.8-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * automatically import gpg keys on backup restore
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sun, 15 May 2011 21:29:01 +0300
+ 
+y-ppa-manager (0.0.7.7-1~webupd8~karmic) karmic; urgency=low
+ 
+  * lots of bugfixes
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sun, 15 May 2011 18:49:29 +0300
+ 
+y-ppa-manager (0.0.7.6-1~webupd8~natty) natty; urgency=low
+ 
+  * added experimental Linux Mint 11 Katya support
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Fri, 06 May 2011 14:00:35 +0300
+ 
+y-ppa-manager (0.0.7.5-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * new upstream release
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 20 Apr 2011 21:48:42 +0300
+ 
+y-ppa-manager (0.0.7-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * new bugfix release
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sun, 10 Apr 2011 20:14:15 +0300
+ 
+y-ppa-manager (0.0.6-1~webupd8~karmic) karmic; urgency=medium
+ 
+  * bugfix release
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Fri, 18 Mar 2011 10:08:25 +0200
+ 
+y-ppa-manager (0.0.5-1~webupd8~karmic) karmic; urgency=low
+ 
+  * added settings dialog, backup and restore, remove duplicates
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 26 Jan 2011 14:46:01 +0200
+ 
+y-ppa-manager (0.0.4.3-1~webupd8~karmic) karmic; urgency=low
+ 
+  * minor bugfix release
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Sun, 16 Jan 2011 21:32:57 +0200
+ 
+y-ppa-manager (0.0.4.2-1~webupd8~karmic1) karmic; urgency=low
+ 
+  * new icons
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 13 Jan 2011 11:52:34 +0200
+ 
+y-ppa-manager (0.0.4.1-1~webupd8~karmic) karmic; urgency=low
+ 
+  * enlarge GUI window a bit so it fits ok in Ubuntu 10.10 default font settings of 11px; add yad 0.8.0 as required dep version
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 13 Jan 2011 11:19:13 +0200
+ 
+y-ppa-manager (0.0.4-1~webupd8~karmic) karmic; urgency=low
+ 
+  * new deep search feature
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 12 Jan 2011 14:07:40 +0200
+ 
+y-ppa-manager (0.0.3.1-1~webupd8~karmic1) karmic; urgency=low
+ 
+  * open ppa links in browser instead of copying the link to the clipboard
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Mon, 20 Dec 2010 13:39:32 +0200
+ 
+y-ppa-manager (0.0.3.1-1~webupd8~karmic) karmic; urgency=low
+ 
+  * open PPA links in browser instead of copying the PPA link
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Mon, 20 Dec 2010 11:25:36 +0200
+ 
+y-ppa-manager (0.0.3-1~webupd8~karmic) karmic; urgency=low
+ 
+  * add gpg key on port 80 when a PPA is added; new icon sizes
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 16 Dec 2010 15:33:26 +0200
+ 
+y-ppa-manager (0.0.2-1+20101202~webupd8~natty) natty; urgency=low
+ 
+  * Removed notifications when selecting an action
+ 
+ -- Alin Andrei <webupd8@gmail.com>  Thu, 02 Dec 2010 00:02:05 +0200
+ 
+y-ppa-manager (0.0.2-1~webupd8~natty) natty; urgency=low
+
+  * Linux Mint support (closes #680644 )
+
+ -- Alin Andrei <webupd8@gmail.com>  Sat, 27 Nov 2010 16:58:54 +0200
+
+y-ppa-manager (0.0.1-3~webupd8~natty1) natty; urgency=low
+
+  * lots of bugs fixed
+
+ -- Alin Andrei <webupd8@gmail.com>  Wed, 17 Nov 2010 11:48:32 +0200
+
+y-ppa-manager (0.0.1-2~webupd8~natty) natty; urgency=low
+
+  * hopefully fixed issue with .ubuntuversion.list in /etc/apt/sources.list.d
+
+ -- Alin Andrei <webupd8@gmail.com>  Tue, 16 Nov 2010 11:42:32 +0200
+
+y-ppa-manager (0.0.1-1~webupd8~karmic5) karmic; urgency=low
+
+  * minor tweak
+
+ -- Alin Andrei <webupd8@gmail.com>  Tue, 16 Nov 2010 15:58:28 +0200
+
+y-ppa-manager (0.0.1-1~webupd8~natty) natty; urgency=low
+
+  * initial release
+
+ -- Alin Andrei <webupd8@gmail.com>  Tue, 16 Nov 2010 15:37:28 +0200

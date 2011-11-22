@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Advanced
+Comment=Advanced options like PPA Purge, remove duplicate PPAs and more
+GenericName=Advanced
+Exec=y-ppa-cmd advanced
+Icon=stock_new-appointment
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Categories=GNOME;System;
+StartupWMClass=Y-PPA-Manager
