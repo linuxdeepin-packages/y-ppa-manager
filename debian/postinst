@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e 
 ON_USER=$(who | awk '{print $1}' | sed '/^root$/d' | uniq)
 
 case `lsb_release -cs` in
@@ -50,5 +51,5 @@ else
 		echo "rankings=false" >> /etc/y-ppa-manager.conf
 	fi
 fi
-
+#DEBHELPER#
 exit 0

@@ -1,11 +1,33 @@
-This package was debianized by Alin Andrei <webupd8@gmail.com> on Fri,  09 Apr 2010 11:05 +0200
+Format: http://dep.debian.net/deps/dep5
+Upstream-Name: y-ppa-manager
+Source: https://launchpad.net/y-ppa-manager
+          
+License: GPL-3
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the
+ Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+ MA 02110-1301, USA.
+ .
+ On Debian systems, the full text of GPL-3 could be found at 
+ /usr/share/common-licenses/GPL-3 .
 
-Upstream Author: Alin Andrei <webupd8@gmail.com>
+Files: *
+Copyright: unkown, unkown
+	unkown, Marc Deslauriers
+	unkown, tiheum
+License: GPL-3
 
-Copyright: 2010 Alin Andrei
-
-License:
-    GPL v3 see http://www.gnu.org/ for details
-
-
-The Debian packaging is copyright 2010 Alin Andrei <webupd8@gmail.com> and available on the same terms as the package itself (see above).
+Files: debian/*
+Copyright: 2011 Li Longyu <leaeasy@gmail.com>
+	2011 Alin Andrie
+License: GPL-3

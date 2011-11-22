@@ -1,7 +1,7 @@
 y-ppa-cmd /usr/bin/
 y-ppa-manager /usr/bin/
 list_search_ppas /usr/bin/
-ppastats.py /usr/bin/
+ppastats.py /usr/share/y-ppa-manager
 ppa-upgrade /usr/bin/
 debian/y-ppa-manager.desktop /usr/share/applications/
 doc/y_ppa_man_help /usr/share/doc/y-ppa-manager/

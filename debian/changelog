@@ -1,3 +1,9 @@
+y-ppa-manager (0.0.8.2-2~deepin) oneiric; urgency=low
+
+  * make leaeasy as the maintainer
+
+ -- Li Longyu <leaeasy@gmail.com>  Tue, 22 Nov 2011 11:01:27 +0800
+
 y-ppa-manager (0.0.8.2-1~webupd8~oneiric2) oneiric; urgency=medium
  
   * default

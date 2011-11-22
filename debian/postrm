@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e 
 if [ "$1" = "purge" ] ; then
         rm /etc/y-ppa-manager.conf
 fi
-
+#DEBHELPER#
 exit 0
